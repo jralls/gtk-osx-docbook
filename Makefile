@@ -7,5 +7,7 @@ all:
 clean:
 	@echo "Nothing to clean."
 
-install:
-	./install.sh
+install: all
+	sed "s|%PREFIX%|$(JHBUILD_PREFIX)|" xml/catalog.tmpl > xml/catalog
+	mkdir -p $(DESTDIR)$(JHBUILD_PREFIX)/share/xml
+	cp -r xml/ $(DESTDIR)$(JHBUILD_PREFIX)/share/xml
