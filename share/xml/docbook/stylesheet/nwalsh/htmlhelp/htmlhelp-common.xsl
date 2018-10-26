@@ -3,17 +3,17 @@
 <!ENTITY lf '<xsl:text xmlns:xsl="http://www.w3.org/1999/XSL/Transform">&#xA;</xsl:text>'>
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                xmlns:exsl="http://exslt.org/common"
-                xmlns:set="http://exslt.org/sets"
-                xmlns:h="urn:x-hex"
-		xmlns:ng="http://docbook.org/docbook-ng"
-		xmlns:db="http://docbook.org/ns/docbook"
-		version="1.0"
-                exclude-result-prefixes="doc exsl set h db ng">
+  xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+  xmlns:exsl="http://exslt.org/common"
+  xmlns:set="http://exslt.org/sets"
+  xmlns:h="urn:x-hex"
+  xmlns:ng="http://docbook.org/docbook-ng"
+  xmlns:db="http://docbook.org/ns/docbook"
+  version="1.0"
+  exclude-result-prefixes="doc exsl set h db ng">
 
 <!-- ********************************************************************
-     $Id: htmlhelp-common.xsl 6156 2006-08-13 07:06:50Z bobstayton $
+     $Id: htmlhelp-common.xsl 9908 2014-02-24 19:02:52Z bobstayton $
      ******************************************************************** -->
 
 <!-- ==================================================================== -->
@@ -27,67 +27,110 @@
 
 <!-- ==================================================================== -->
 
-<xsl:param name="htmlhelp.generate.index" select="//indexterm[1]"/>
-
+<xsl:param name="htmlhelp.generate.index" select="//indexterm[1]|//db:indexterm[1]|//ng:indexterm[1]"/>
+  
 <!-- Set up HTML Help flag -->
 <xsl:variable name="htmlhelp.output" select="1"/>
 
-<xsl:variable name="raw.help.title">
-  <xsl:choose>
-    <xsl:when test="$htmlhelp.title = ''">
-      <xsl:choose>
-        <xsl:when test="$rootid != ''">
-          <xsl:apply-templates select="key('id',$rootid)" mode="title.markup"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates select="/*" mode="title.markup"/>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:value-of select="$htmlhelp.title"/>
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:variable>
-
-<xsl:variable name="help.title" select="normalize-space($raw.help.title)"/>
-  
 <!-- ==================================================================== -->
 
+<!-- To use the same namespace-adjusted nodeset everywhere, it should
+be created as a global variable here.
+Used by docbook.xsl, chunk-common.xsl, chunktoc.xsl, and
+chunk-code.xsl; and in $chunk.hierarchy used in chunkfast.xsl -->
+<xsl:variable name="no.namespace">
+  <xsl:if test="$exsl.node.set.available != 0 and 
+                namespace-uri(/*) = 'http://docbook.org/ns/docbook'">
+      <xsl:apply-templates select="/*" mode="stripNS"/>
+  </xsl:if>
+</xsl:variable>
+
 <xsl:template match="/">
-  <xsl:if test="$htmlhelp.only != 1">
-    <xsl:choose>
-      <xsl:when test="$rootid != ''">
+
+  <!-- * Get a title for current doc so that we let the user -->
+  <!-- * know what document we are processing at this point. -->
+  <xsl:variable name="doc.title">
+    <xsl:call-template name="get.doc.title"/>
+  </xsl:variable>
+  <xsl:choose>
+    <!-- fix namespace if necessary -->
+    <xsl:when test="$exsl.node.set.available != 0 and 
+                  namespace-uri(/*) = 'http://docbook.org/ns/docbook'">
+      <xsl:call-template name="log.message">
+        <xsl:with-param name="level">Note</xsl:with-param>
+        <xsl:with-param name="source" select="$doc.title"/>
+        <xsl:with-param name="context-desc">
+          <xsl:text>namesp. cut</xsl:text>
+        </xsl:with-param>
+        <xsl:with-param name="message">
+          <xsl:text>stripped namespace before processing</xsl:text>
+        </xsl:with-param>
+      </xsl:call-template>
+      <!-- DEBUG: uncomment to save namespace-fixed document.
+      <xsl:message>Saving namespace-fixed document.</xsl:message>
+      <xsl:call-template name="write.chunk">
+        <xsl:with-param name="filename" select="'namespace-fixed.debug.xml'"/>
+        <xsl:with-param name="method" select="'xml'"/>
+        <xsl:with-param name="content">
+          <xsl:copy-of select="exsl:node-set($no.namespace)"/>
+        </xsl:with-param>
+      </xsl:call-template>
+      -->
+      <xsl:apply-templates select="exsl:node-set($no.namespace)"/>
+    </xsl:when>
+    <!-- Can't process unless namespace fixed with exsl node-set()-->
+    <xsl:when test="namespace-uri(/*) = 'http://docbook.org/ns/docbook'">
+      <xsl:message terminate="yes">
+        <xsl:text>Unable to strip the namespace from DB5 document,</xsl:text>
+        <xsl:text> cannot proceed.</xsl:text>
+      </xsl:message>
+    </xsl:when>
+
+    <xsl:otherwise>
+      <xsl:if test="$htmlhelp.only != 1">
         <xsl:choose>
-          <xsl:when test="count(key('id',$rootid)) = 0">
-            <xsl:message terminate="yes">
-              <xsl:text>ID '</xsl:text>
-              <xsl:value-of select="$rootid"/>
-              <xsl:text>' not found in document.</xsl:text>
-            </xsl:message>
+          <xsl:when test="$rootid != ''">
+            <xsl:choose>
+              <xsl:when test="count(key('id',$rootid)) = 0">
+                <xsl:message terminate="yes">
+                  <xsl:text>ID '</xsl:text>
+                  <xsl:value-of select="$rootid"/>
+                  <xsl:text>' not found in document.</xsl:text>
+                </xsl:message>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:message>Formatting from <xsl:value-of select="$rootid"/></xsl:message>
+                <xsl:apply-templates select="key('id',$rootid)" mode="process.root"/>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:when>
           <xsl:otherwise>
-            <xsl:message>Formatting from <xsl:value-of select="$rootid"/></xsl:message>
-            <xsl:apply-templates select="key('id',$rootid)" mode="process.root"/>
+            <xsl:if test="$collect.xref.targets = 'yes' or
+                          $collect.xref.targets = 'only'">
+              <xsl:apply-templates select="/" mode="collect.targets"/>
+            </xsl:if>
+            <xsl:if test="$collect.xref.targets != 'only'">
+              <xsl:apply-templates select="/" mode="process.root"/>
+            </xsl:if>
           </xsl:otherwise>
         </xsl:choose>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:apply-templates select="/" mode="process.root"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:if>
-
-  <xsl:call-template name="hhp"/>
-  <xsl:call-template name="hhc"/>
-  <xsl:if test="($rootid = '' and //processing-instruction('dbhh')) or
-                ($rootid != '' and key('id',$rootid)//processing-instruction('dbhh'))">
-    <xsl:call-template name="hh-map"/>
-    <xsl:call-template name="hh-alias"/>
-  </xsl:if>
-  <xsl:if test="$htmlhelp.generate.index">
-    <xsl:call-template name="hhk"/>
-  </xsl:if>
+      </xsl:if>
+    
+    
+      <xsl:if test="$collect.xref.targets != 'only'">
+        <xsl:call-template name="hhp"/>
+        <xsl:call-template name="hhc"/>
+        <xsl:if test="($rootid = '' and //processing-instruction('dbhh')) or
+                      ($rootid != '' and key('id',$rootid)//processing-instruction('dbhh'))">
+          <xsl:call-template name="hh-map"/>
+          <xsl:call-template name="hh-alias"/>
+        </xsl:if>
+        <xsl:if test="$htmlhelp.generate.index">
+          <xsl:call-template name="hhk"/>
+        </xsl:if>
+      </xsl:if>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <!-- ==================================================================== -->
@@ -96,7 +139,7 @@
   <xsl:call-template name="write.text.chunk">
     <xsl:with-param name="filename">
       <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$base.dir"/>
+        <xsl:value-of select="$chunk.base.dir"/>
       </xsl:if>
       <xsl:value-of select="$htmlhelp.hhp"/>
     </xsl:with-param>
@@ -105,11 +148,33 @@
       <xsl:call-template name="hhp-main"/>
     </xsl:with-param>
     <xsl:with-param name="encoding" select="$htmlhelp.encoding"/>
+    <xsl:with-param name="quiet" select="$chunk.quietly"/>
   </xsl:call-template>
 </xsl:template>
 
 <!-- ==================================================================== -->
 <xsl:template name="hhp-main">
+
+  <xsl:variable name="raw.help.title">
+    <xsl:choose>
+      <xsl:when test="$htmlhelp.title = ''">
+        <xsl:choose>
+          <xsl:when test="$rootid != ''">
+            <xsl:apply-templates select="key('id',$rootid)" mode="title.markup"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates select="/*" mode="title.markup"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$htmlhelp.title"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+
+  <xsl:variable name="help.title" select="normalize-space($raw.help.title)"/>
+  
 <xsl:variable name="default.topic">
   <xsl:choose>
     <xsl:when test="$htmlhelp.default.topic != ''">
@@ -119,7 +184,7 @@
       <xsl:call-template name="make-relative-filename">
         <xsl:with-param name="base.dir">
           <xsl:if test="$manifest.in.base.dir = 0">
-            <xsl:value-of select="$base.dir"/>
+            <xsl:value-of select="$chunk.base.dir"/>
           </xsl:if>
         </xsl:with-param>
         <xsl:with-param name="base.name">
@@ -327,7 +392,8 @@ Enhanced decompilation=</xsl:text>
     </xsl:choose>
   </xsl:variable>
   <xsl:choose>
-    <xsl:when test="function-available('exsl:node-set') and function-available('set:distinct')">
+    <xsl:when test="$exsl.node.set.available != 0
+                    and function-available('set:distinct')">
       <xsl:for-each select="set:distinct(exsl:node-set($imagelist)/filename)">
         <xsl:value-of select="."/>
         <xsl:text>&#10;</xsl:text>
@@ -381,19 +447,19 @@ Enhanced decompilation=</xsl:text>
 
     <xsl:variable name="useobject">
       <xsl:choose>
-	<!-- The phrase is never used -->
+        <!-- The phrase is never used -->
         <xsl:when test="name($object)='textobject' and $object/phrase">
           <xsl:text>0</xsl:text>
         </xsl:when>
-	<!-- The first textobject is a reasonable fallback (but not for image in HH) -->
+        <!-- The first textobject is a reasonable fallback (but not for image in HH) -->
         <xsl:when test="name($object)='textobject'">
           <xsl:text>0</xsl:text>
         </xsl:when>
-	<!-- If there's only one object, use it -->
-	<xsl:when test="$count = 1 and count($olist) = 1">
-	  <xsl:text>1</xsl:text>
-	</xsl:when>
-	<!-- Otherwise, see if this one is a useable graphic -->
+        <!-- If there's only one object, use it -->
+        <xsl:when test="$count = 1 and count($olist) = 1">
+          <xsl:text>1</xsl:text>
+        </xsl:when>
+        <!-- Otherwise, see if this one is a useable graphic -->
         <xsl:otherwise>
           <xsl:choose>
             <!-- peek inside imageobjectco to simplify the test -->
@@ -444,10 +510,10 @@ Enhanced decompilation=</xsl:text>
   <xsl:variable name="filename">
     <xsl:choose>
       <xsl:when test="starts-with($urifilename, 'file:/')">
-	<xsl:value-of select="substring-after($urifilename, 'file:/')"/>
+        <xsl:value-of select="substring-after($urifilename, 'file:/')"/>
       </xsl:when>
       <xsl:otherwise>
-	<xsl:value-of select="$urifilename"/>
+        <xsl:value-of select="$urifilename"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:variable>
@@ -481,7 +547,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:call-template name="write.chunk">
     <xsl:with-param name="filename">
       <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$base.dir"/>
+        <xsl:value-of select="$chunk.base.dir"/>
       </xsl:if>
       <xsl:value-of select="$htmlhelp.hhc"/>
     </xsl:with-param>
@@ -490,6 +556,7 @@ Enhanced decompilation=</xsl:text>
       <xsl:call-template name="hhc-main"/>
     </xsl:with-param>
     <xsl:with-param name="encoding" select="$htmlhelp.encoding"/>
+    <xsl:with-param name="quiet" select="$chunk.quietly"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -505,10 +572,10 @@ Enhanced decompilation=</xsl:text>
   <xsl:variable name="content">
     <xsl:choose>
       <xsl:when test="$rootid != ''">
-	<xsl:apply-templates select="key('id',$rootid)" mode="hhc"/>
+        <xsl:apply-templates select="key('id',$rootid)" mode="hhc"/>
       </xsl:when>
       <xsl:otherwise>
-	<xsl:apply-templates select="/" mode="hhc"/>
+        <xsl:apply-templates select="/" mode="hhc"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:variable>
@@ -577,19 +644,19 @@ Enhanced decompilation=</xsl:text>
           </param>&lf;
           <param name="Local">
             <xsl:attribute name="value">
-	      <xsl:choose>
-		<xsl:when test="$chunk.tocs.and.lots != 0">
-		  <xsl:apply-templates select="." mode="recursive-chunk-filename">
-		    <xsl:with-param name="recursive" select="true()"/>
-		  </xsl:apply-templates>
-		  <xsl:text>-toc</xsl:text>
-		  <xsl:value-of select="$html.ext"/>
-		</xsl:when>
-		<xsl:otherwise>
-		  <xsl:call-template name="href.target.with.base.dir"/>
-		</xsl:otherwise>
-	      </xsl:choose>
-	    </xsl:attribute>
+              <xsl:choose>
+                <xsl:when test="$chunk.tocs.and.lots != 0">
+                  <xsl:apply-templates select="." mode="recursive-chunk-filename">
+                    <xsl:with-param name="recursive" select="true()"/>
+                  </xsl:apply-templates>
+                  <xsl:text>-toc</xsl:text>
+                  <xsl:value-of select="$html.ext"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:call-template name="href.target.with.base.dir"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </xsl:attribute>
           </param>
       </OBJECT></LI>&lf;
       </xsl:if>
@@ -613,31 +680,31 @@ Enhanced decompilation=</xsl:text>
         <LI><OBJECT type="text/sitemap">&lf;
             <param name="Name">
               <xsl:attribute name="value">
-		<xsl:call-template name="gentext">
-		  <xsl:with-param name="key" select="'TableofContents'"/>
-		</xsl:call-template>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key" select="'TableofContents'"/>
+                </xsl:call-template>
               </xsl:attribute>
             </param>&lf;
             <param name="Local">
-	      <xsl:attribute name="value">
-		<xsl:choose>
-		  <xsl:when test="$chunk.tocs.and.lots != 0">
-		    <xsl:apply-templates select="." mode="recursive-chunk-filename">
-		      <xsl:with-param name="recursive" select="true()"/>
-		    </xsl:apply-templates>
-		    <xsl:text>-toc</xsl:text>
-		    <xsl:value-of select="$html.ext"/>
-		  </xsl:when>
-		  <xsl:otherwise>
-		    <xsl:call-template name="href.target.with.base.dir"/>
-		  </xsl:otherwise>
-		</xsl:choose>
-	      </xsl:attribute>
+              <xsl:attribute name="value">
+                <xsl:choose>
+                  <xsl:when test="$chunk.tocs.and.lots != 0">
+                    <xsl:apply-templates select="." mode="recursive-chunk-filename">
+                      <xsl:with-param name="recursive" select="true()"/>
+                    </xsl:apply-templates>
+                    <xsl:text>-toc</xsl:text>
+                    <xsl:value-of select="$html.ext"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:call-template name="href.target.with.base.dir"/>
+                  </xsl:otherwise>
+                </xsl:choose>
+              </xsl:attribute>
             </param>
         </OBJECT></LI>&lf;
       </xsl:if>
       <xsl:apply-templates select="part|reference|preface|chapter|bibliography|appendix|article|colophon|glossary"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>&lf;
   </xsl:if>
 </xsl:template>
@@ -650,8 +717,8 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="article|reference|preface|chapter|appendix|refentry|section|sect1|bibliodiv">
     <UL>&lf;
       <xsl:apply-templates
-	select="article|reference|preface|chapter|appendix|refentry|section|sect1|bibliodiv"
-	mode="hhc"/>
+        select="article|reference|preface|chapter|appendix|refentry|section|sect1|bibliodiv"
+        mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -674,7 +741,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="sect2[$htmlhelp.hhc.section.depth > 1]|refentry">
     <UL>&lf;
       <xsl:apply-templates select="sect2|refentry"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -686,7 +753,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="sect3[$htmlhelp.hhc.section.depth > 2]|refentry">
     <UL>&lf;
       <xsl:apply-templates select="sect3|refentry"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -698,7 +765,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="sect4[$htmlhelp.hhc.section.depth > 3]|refentry">
     <UL>&lf;
       <xsl:apply-templates select="sect4|refentry"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -710,7 +777,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="sect5[$htmlhelp.hhc.section.depth > 4]|refentry">
     <UL>&lf;
       <xsl:apply-templates select="sect5|refentry"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -722,7 +789,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:if test="refentry">
     <UL>&lf;
       <xsl:apply-templates select="refentry"
-			   mode="hhc"/>
+                           mode="hhc"/>
     </UL>
   </xsl:if>
 </xsl:template>
@@ -759,7 +826,7 @@ Enhanced decompilation=</xsl:text>
 
       <xsl:if test="tertiary">
         <xsl:if test="not(//indexterm[normalize-space(primary)=$primary and 
-		                      normalize-space(secondary)=$secondary and not(tertiary)])">
+                                      normalize-space(secondary)=$secondary and not(tertiary)])">
           <xsl:call-template name="write.indexterm">
             <xsl:with-param name="text" select="concat($primary, ', ', $secondary)"/>
           </xsl:call-template>
@@ -796,7 +863,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:call-template name="write.chunk">
     <xsl:with-param name="filename">
       <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$base.dir"/>
+        <xsl:value-of select="$chunk.base.dir"/>
       </xsl:if>
       <xsl:value-of select="$htmlhelp.hhk"/>
     </xsl:with-param>
@@ -825,6 +892,7 @@ Enhanced decompilation=</xsl:text>
 </BODY></HTML>]]>
 </xsl:text></xsl:with-param>
     <xsl:with-param name="encoding" select="$htmlhelp.encoding"/>
+    <xsl:with-param name="quiet" select="$chunk.quietly"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -882,9 +950,9 @@ Enhanced decompilation=</xsl:text>
           <xsl:call-template name="href.target.with.base.dir"/>
         </xsl:variable>
         <xsl:variable name="title">
-	  <xsl:call-template name="nearest.title">
-	    <xsl:with-param name="object" select=".."/>
-	  </xsl:call-template>
+          <xsl:call-template name="nearest.title">
+            <xsl:with-param name="object" select=".."/>
+          </xsl:call-template>
         </xsl:variable>
 
         <param name="Name">
@@ -922,7 +990,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:call-template name="write.text.chunk">
     <xsl:with-param name="filename">
       <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$base.dir"/>
+        <xsl:value-of select="$chunk.base.dir"/>
       </xsl:if>
       <xsl:value-of select="$htmlhelp.map.file"/>
     </xsl:with-param>
@@ -938,6 +1006,7 @@ Enhanced decompilation=</xsl:text>
      </xsl:choose>
     </xsl:with-param>
     <xsl:with-param name="encoding" select="$htmlhelp.encoding"/>
+    <xsl:with-param name="quiet" select="$chunk.quietly"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -971,7 +1040,7 @@ Enhanced decompilation=</xsl:text>
   <xsl:call-template name="write.text.chunk">
     <xsl:with-param name="filename">
       <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$base.dir"/>
+        <xsl:value-of select="$chunk.base.dir"/>
       </xsl:if>
       <xsl:value-of select="$htmlhelp.alias.file"/>
     </xsl:with-param>
@@ -987,6 +1056,7 @@ Enhanced decompilation=</xsl:text>
      </xsl:choose>
     </xsl:with-param>
     <xsl:with-param name="encoding" select="$htmlhelp.encoding"/>
+    <xsl:with-param name="quiet" select="$chunk.quietly"/>
   </xsl:call-template>
 </xsl:template>
 

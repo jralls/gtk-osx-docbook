@@ -22,7 +22,8 @@
 
 <xsl:template match="set|book|part|reference|preface|chapter|appendix|article
                      |glossary|bibliography|index|setindex
-                     |refentry
+                     |refentry|refsynopsisdiv
+                     |refsect1|refsect2|refsect3|refsection
                      |sect1|sect2|sect3|sect4|sect5|section"
               mode="ati.xsl11.bookmarks">
   <xsl:variable name="id">
@@ -36,6 +37,7 @@
   <!-- If the object is a set or book, generate a bookmark for the toc -->
 
   <xsl:choose>
+    <xsl:when test="self::index and $generate.index = 0"/>	
     <xsl:when test="parent::*">
       <fo:bookmark internal-destination="{$id}">
         <fo:bookmark-title>

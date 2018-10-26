@@ -60,4 +60,6 @@
 <delegatePublic publicIdStartString="-//OASIS//ELEMENTS DocBook Document Hierarchy V4.1.2//EN" catalog="file:///usr/share/xml/docbook/schema/dtd/4.1.2/catalog.xml"/>
 <delegatePublic publicIdStartString="-//OASIS//ENTITIES DocBook Character Entities V4.1.2//EN" catalog="file:///usr/share/xml/docbook/schema/dtd/4.1.2/catalog.xml"/>
 <delegatePublic publicIdStartString="-//OASIS//ELEMENTS DocBook Information Pool V4.1.2//EN" catalog="file:///usr/share/xml/docbook/schema/dtd/4.1.2/catalog.xml"/>
+<nextCatalog catalog="file:///usr/share/xml/docbook/schema/dtd/4.5/catalog.xml"/>
+<nextCatalog catalog="file:///usr/share/xml/docbook/schema/dtd/5.0/catalog.xml"/>
 </catalog>

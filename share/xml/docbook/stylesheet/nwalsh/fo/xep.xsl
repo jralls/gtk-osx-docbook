@@ -5,7 +5,7 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: xep.xsl 5469 2005-11-20 19:30:41Z bobstayton $
+     $Id: xep.xsl 9838 2014-01-07 21:36:28Z bobstayton $
      ********************************************************************
      (c) Stephane Bline Peregrine Systems 2001
      Implementation of xep extensions:
@@ -18,7 +18,8 @@
 
 <xsl:template name="xep-document-information">
   <rx:meta-info>
-    <xsl:variable name="authors" select="(//author|//editor|//corpauthor|//authorgroup)[1]"/>
+    <xsl:variable name="authors" 
+                  select="(//author|//editor|//corpauthor|//authorgroup)[1]"/>
     <xsl:if test="$authors">
       <xsl:variable name="author">
         <xsl:choose>
@@ -31,6 +32,9 @@
           </xsl:when>
           <xsl:when test="$authors[self::corpauthor]">
             <xsl:value-of select="$authors"/>
+          </xsl:when>
+          <xsl:when test="$authors[orgname]">
+            <xsl:value-of select="$authors/orgname"/>
           </xsl:when>
           <xsl:otherwise>
             <xsl:call-template name="person.name">
@@ -55,7 +59,9 @@
     <xsl:element name="rx:meta-field">
       <xsl:attribute name="name">creator</xsl:attribute>
       <xsl:attribute name="value">
-        <xsl:text>DocBook XSL Stylesheets V</xsl:text>
+        <xsl:text>DocBook </xsl:text>
+        <xsl:value-of select="$DistroTitle"/>
+        <xsl:text> V</xsl:text>
         <xsl:value-of select="$VERSION"/>
       </xsl:attribute>
     </xsl:element>
@@ -106,7 +112,7 @@
 </xsl:template>
 
 <xsl:template match="set|book|part|reference|preface|chapter|appendix|article
-                     |glossary|bibliography|index|setindex
+                     |glossary|bibliography|index|setindex|topic
                      |refentry|refsynopsisdiv
                      |refsect1|refsect2|refsect3|refsection
                      |sect1|sect2|sect3|sect4|sect5|section"
@@ -120,10 +126,13 @@
 
   <!-- Put the root element bookmark at the same level as its children -->
   <!-- If the object is a set or book, generate a bookmark for the toc -->
-
   <xsl:choose>
+    <xsl:when test="self::index and $generate.index = 0"/>	
     <xsl:when test="parent::*">
       <rx:bookmark internal-destination="{$id}">
+        <xsl:attribute name="starting-state">
+          <xsl:value-of select="$bookmarks.state"/>
+        </xsl:attribute>
         <rx:bookmark-label>
           <xsl:value-of select="normalize-space($bookmark-label)"/>
         </rx:bookmark-label>
@@ -133,6 +142,9 @@
     <xsl:otherwise>
       <xsl:if test="$bookmark-label != ''">
         <rx:bookmark internal-destination="{$id}">
+          <xsl:attribute name="starting-state">
+            <xsl:value-of select="$bookmarks.state"/>
+          </xsl:attribute>
           <rx:bookmark-label>
             <xsl:value-of select="normalize-space($bookmark-label)"/>
           </rx:bookmark-label>
@@ -146,7 +158,7 @@
       </xsl:variable>
       <xsl:if test="contains($toc.params, 'toc')
                     and set|book|part|reference|section|sect1|refentry
-                        |article|bibliography|glossary|chapter
+                        |article|topic|bibliography|glossary|chapter
                         |appendix">
         <rx:bookmark internal-destination="toc...{$id}">
           <rx:bookmark-label>

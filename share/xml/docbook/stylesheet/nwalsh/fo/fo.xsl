@@ -4,14 +4,63 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: fo.xsl 5617 2006-03-06 19:30:04Z bobstayton $
+     $Id: fo.xsl 9860 2014-01-21 22:37:57Z bobstayton $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://nwalsh.com/docbook/xsl/ for copyright
-     and other information.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
 
      ******************************************************************** -->
+
+<!-- These variables set the margin-left or -right attribute value for FO output based on
+     the writing-mode specified in the gentext file for the document's lang. -->
+
+<xsl:param name="direction.align.start">
+  <xsl:choose>
+    <!-- FOP does not support writing-mode="rl-tb" -->
+    <xsl:when test="$fop.extensions != 0">left</xsl:when>
+    <xsl:when test="$fop1.extensions != 0">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">top</xsl:when>
+    <xsl:otherwise>left</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
+<xsl:param name="direction.align.end">
+  <xsl:choose>
+    <xsl:when test="$fop.extensions != 0">right</xsl:when>
+    <xsl:when test="$fop1.extensions != 0">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">bottom</xsl:when>
+    <xsl:otherwise>right</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
+<xsl:param name="direction.mode">
+  <xsl:choose>
+    <xsl:when test="$fop.extensions != 0 and
+                    starts-with($writing.mode, 'rl')">
+      <xsl:message>WARNING: FOP does not support right-to-left writing-mode</xsl:message>
+      <xsl:text>lr-tb</xsl:text>
+    </xsl:when>
+    <xsl:when test="$fop1.extensions != 0 and
+                    starts-with($writing.mode, 'rl')">
+      <xsl:message>
+        <xsl:text>WARNING: FOP 1.0 does not support right-to-left writing-mode; </xsl:text>
+        <xsl:text>FOP 1.1 has limited support for right-to-left writing-mode.</xsl:text>
+      </xsl:message>
+      <xsl:text>rl-tb</xsl:text>
+    </xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">lr-tb</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">rl-tb</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">tb-rl</xsl:when>
+    <xsl:otherwise>lr-tb</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
 
 <xsl:template name="anchor">
   <xsl:param name="node" select="."/>
@@ -47,11 +96,11 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="$dingbat.font.family = ''">
+    <xsl:when test="$dingbat.fontset = ''">
       <xsl:copy-of select="$symbol"/>
     </xsl:when>
     <xsl:otherwise>
-      <fo:inline font-family="{$dingbat.font.family}">
+      <fo:inline font-family="{$dingbat.fontset}">
         <xsl:copy-of select="$symbol"/>
       </fo:inline>
     </xsl:otherwise>
