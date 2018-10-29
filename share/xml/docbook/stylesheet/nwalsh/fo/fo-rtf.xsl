@@ -7,12 +7,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: fo-rtf.xsl 1647 2002-06-11 13:38:03Z nwalsh $
+     $Id: fo-rtf.xsl 6910 2007-06-28 23:23:30Z xmldoc $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     and other information.
+     copyright and other information.
 
      ******************************************************************** -->
 

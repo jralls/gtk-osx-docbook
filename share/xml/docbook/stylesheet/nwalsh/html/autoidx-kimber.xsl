@@ -1,30 +1,25 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY secondary 'normalize-space(concat(secondary/@sortas, secondary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY tertiary  'normalize-space(concat(tertiary/@sortas, tertiary[not(@sortas) or @sortas = ""]))'>
+<!ENTITY % common.entities SYSTEM "../common/entities.ent">
+%common.entities;
 
 <!-- Documents using the kimber index method must have a lang attribute -->
 <!-- Only one of these should be present in the entity -->
 <!ENTITY lang 'concat(/*/@lang, /*/@xml:lang)'>
 
-<!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                and ($role = @role or $type = @type or
-                (string-length($role) = 0 and string-length($type) = 0))'>
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:k="java:com.isogen.saxoni18n.Saxoni18nService"
+                xmlns:k="http://www.isogen.com/functions/com.isogen.saxoni18n.Saxoni18nService"
                 exclude-result-prefixes="k"
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kimber.xsl 6262 2006-09-06 08:52:48Z bobstayton $
+     $Id: autoidx-kimber.xsl 8729 2010-07-15 16:43:56Z bobstayton $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://nwalsh.com/docbook/xsl/ for copyright
-     and other information.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -87,10 +82,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('k-group',
-                   k:getIndexGroupKey(&lang;, &primary;))
-                   [&scope;][1]) = 1
-                   and not(@class = 'endofrange')]"/>
+                select="//indexterm[count(.|key('k-group', k:getIndexGroupKey(&lang;, &primary;))[&scope;][1]) = 1 and not(@class = 'endofrange')]"/>
 
   <xsl:variable name="alphabetical"
                 select="$terms[not(starts-with(
@@ -150,8 +142,7 @@
   <xsl:variable name="label"
           select="k:getIndexGroupLabel(&lang;, $key)"/>
 
-  <xsl:if test="key('k-group', $label)[&scope;]
-                [count(.|key('primary', &primary;)[&scope;][1]) = 1]">
+  <xsl:if test="key('k-group', $label)[&scope;][count(.|key('primary', &primary;)[&scope;][1]) = 1]">
     <div class="indexdiv">
       <h3>
         <xsl:value-of select="$label"/>

@@ -23,19 +23,30 @@
 
 <!-- Profiling parameters -->
 <xsl:param name="profile.arch" select="''"/>
+<xsl:param name="profile.audience" select="''"/>
 <xsl:param name="profile.condition" select="''"/>
 <xsl:param name="profile.conformance" select="''"/>
 <xsl:param name="profile.lang" select="''"/>
 <xsl:param name="profile.os" select="''"/>
+<xsl:param name="profile.outputformat" select="';'"/>
 <xsl:param name="profile.revision" select="''"/>
 <xsl:param name="profile.revisionflag" select="''"/>
 <xsl:param name="profile.role" select="''"/>
 <xsl:param name="profile.security" select="''"/>
+<xsl:param name="profile.status" select="''"/>
 <xsl:param name="profile.userlevel" select="''"/>
 <xsl:param name="profile.vendor" select="''"/>
+<xsl:param name="profile.wordsize" select="''"/>
 <xsl:param name="profile.attribute" select="''"/>
 <xsl:param name="profile.value" select="''"/>
 <xsl:param name="profile.separator" select="';'"/>
+
+<xsl:param name="exsl.node.set.available"> 
+  <xsl:choose>
+    <xsl:when xmlns:exsl="http://exslt.org/common" exsl:foo="" test="function-available('exsl:node-set') or contains(system-property('xsl:vendor'), 'Apache Software Foundation')">1</xsl:when>
+    <xsl:otherwise>0</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
 
 <!-- Call common profiling mode -->
 <xsl:template match="/">

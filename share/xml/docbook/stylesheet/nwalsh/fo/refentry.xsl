@@ -5,18 +5,19 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: refentry.xsl 6153 2006-08-10 22:42:16Z xmldoc $
+     $Id: refentry.xsl 9841 2014-01-07 22:31:09Z bobstayton $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://nwalsh.com/docbook/xsl/ for copyright
-     and other information.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
 
      ******************************************************************** -->
 
 <!-- ==================================================================== -->
 
 <xsl:template match="reference">
+   <!-- If there is a partintro, it triggers the page  sequence -->
    <xsl:if test="not(partintro)">
     <xsl:variable name="id">
       <xsl:call-template name="object.id"/>
@@ -80,6 +81,21 @@
         <fo:block id="{$id}">
           <xsl:call-template name="reference.titlepage"/>
         </fo:block>
+
+        <xsl:variable name="toc.params">
+          <xsl:call-template name="find.path.params">
+            <xsl:with-param name="table" 
+                            select="normalize-space($generate.toc)"/>
+          </xsl:call-template>
+        </xsl:variable>
+        <xsl:if test="contains($toc.params, 'toc')">
+          <xsl:call-template name="component.toc">
+            <xsl:with-param name="toc.title.p" 
+                            select="contains($toc.params, 'title')"/>
+          </xsl:call-template>
+          <xsl:call-template name="component.toc.separator"/>
+        </xsl:if>
+
         <!-- Create one page sequence if no pagebreaks needed -->
         <xsl:if test="$refentry.pagebreak = 0">
           <xsl:apply-templates select="refentry"/>
@@ -165,6 +181,24 @@
         <xsl:call-template name="partintro.titlepage"/>
       </xsl:if>
       <xsl:apply-templates/>
+
+      <!-- switch contexts to generate any toc -->
+      <xsl:for-each select="..">
+        <xsl:variable name="toc.params">
+          <xsl:call-template name="find.path.params">
+            <xsl:with-param name="table" 
+                            select="normalize-space($generate.toc)"/>
+          </xsl:call-template>
+        </xsl:variable>
+        <xsl:if test="contains($toc.params, 'toc')">
+          <xsl:call-template name="component.toc">
+            <xsl:with-param name="toc.title.p" 
+                            select="contains($toc.params, 'title')"/>
+          </xsl:call-template>
+          <xsl:call-template name="component.toc.separator"/>
+        </xsl:if>
+      </xsl:for-each>
+
       <!-- Create one page sequence if no pagebreaks needed -->
       <xsl:if test="$refentry.pagebreak = 0">
         <xsl:apply-templates select="../refentry"/>
@@ -174,6 +208,7 @@
 </xsl:template>
 
 <xsl:template match="reference/docinfo|refentry/refentryinfo"></xsl:template>
+<xsl:template match="reference/info"></xsl:template>
 <xsl:template match="reference/title"></xsl:template>
 <xsl:template match="reference/subtitle"></xsl:template>
 
@@ -267,6 +302,7 @@
 </xsl:template>
 
 <xsl:template match="refmeta">
+  <xsl:apply-templates select=".//indexterm"/>
 </xsl:template>
 
 <xsl:template match="manvolnum">
@@ -531,7 +567,12 @@
                      |refsection/title
                      |refsect1/title
                      |refsect2/title
-                     |refsect3/title"
+                     |refsect3/title
+                     |refsynopsisdiv/info/title
+                     |refsection/info/title
+                     |refsect1/info/title
+                     |refsect2/info/title
+                     |refsect3/info/title"
               mode="titlepage.mode"
               priority="2">
   <xsl:call-template name="format.refentry.subheading"/>
@@ -556,7 +597,12 @@
 <!--       <xsl:with-param name="gentext.key" select="'RefName'"/> -->
 <!--     </xsl:call-template> -->
 <!-- -->
-  <xsl:param name="section" select="parent::*"/>
+  <xsl:param name="section" 
+             select="(ancestor::refsynopsisdiv 
+                     |ancestor::refsection
+                     |ancestor::refsect1
+                     |ancestor::refsect2
+                     |ancestor::refsect3)[last()]"/>
   <xsl:param name="offset" select="0"/>
   <xsl:param name="gentext.key"/>
 
@@ -591,15 +637,9 @@
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:if test="$passivetex.extensions != 0">
-      <fotex:bookmark xmlns:fotex="http://www.tug.org/fotex" 
-                      fotex-bookmark-level="{$level + 2 + $offset}" 
-                      fotex-bookmark-label="{$id}">
-        <xsl:value-of select="$title"/>
-      </fotex:bookmark>
-    </xsl:if>
-
-    <xsl:if test="$axf.extensions != 0">
+    <xsl:if test="$axf.extensions != 0 and 
+                  $xsl1.1.bookmarks = 0 and 
+                  $show.bookmarks != 0">
       <xsl:attribute name="axf:outline-level">
         <xsl:value-of select="count(ancestor::*)-1 + $offset"/>
       </xsl:attribute>
@@ -615,6 +655,11 @@
     </xsl:call-template>
   </fo:block>
 </xsl:template>
+
+<xsl:template match="refsectioninfo|refsection/info"></xsl:template>
+<xsl:template match="refsect1info|refsect1/info"></xsl:template>
+<xsl:template match="refsect2info|refsect2/info"></xsl:template>
+<xsl:template match="refsect3info|refsect3/info"></xsl:template>
 
 <!-- ==================================================================== -->
 

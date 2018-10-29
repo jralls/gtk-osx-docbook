@@ -1,31 +1,25 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY secondary 'normalize-space(concat(secondary/@sortas, secondary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY tertiary  'normalize-space(concat(tertiary/@sortas, tertiary[not(@sortas) or @sortas = ""]))'>
-
-<!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                and ($role = @role or $type = @type or
-                (string-length($role) = 0 and string-length($type) = 0))'>
+<!ENTITY % common.entities SYSTEM "../common/entities.ent">
+%common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:i="urn:cz-kosek:functions:index"
                 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
                 xmlns:func="http://exslt.org/functions"
-                xmlns:k="java:com.isogen.saxoni18n.Saxoni18nService"
+                xmlns:k="http://www.isogen.com/functions/com.isogen.saxoni18n.Saxoni18nService"
                 xmlns:exslt="http://exslt.org/common"
                 extension-element-prefixes="func exslt"
                 exclude-result-prefixes="func exslt i l k"
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kosek.xsl 6220 2006-08-30 06:23:19Z bobstayton $
+     $Id: autoidx-kosek.xsl 8725 2010-07-15 08:08:04Z kosek $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://nwalsh.com/docbook/xsl/ for copyright
-     and other information.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -52,8 +46,7 @@
     </xsl:message>
   </xsl:if>
 
-  <xsl:if test="not(function-available('exslt:node-set') or
-                    function-available('exslt:nodeSet'))">
+  <xsl:if test="$exsl.node.set.available = 0">
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the </xsl:text>
       <xsl:text>exslt:node-set() function. Use a processor that </xsl:text>
@@ -65,7 +58,7 @@
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the&#xA;</xsl:text>
       <xsl:text>index extension functions be imported:&#xA;</xsl:text>
-      <xsl:text>  xsl:import href="common/autoidx-ng.xsl"</xsl:text>
+      <xsl:text>  xsl:import href="common/autoidx-kosek.xsl"</xsl:text>
     </xsl:message>
   </xsl:if>
 
@@ -82,10 +75,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('group-code',
-                                          i:group-index(&primary;))
-                                          [&scope;][1]) = 1
-                                    and not(@class = 'endofrange')]"/>
+                select="//indexterm[count(.|key('group-code', i:group-index(&primary;))[&scope;][1]) = 1 and not(@class = 'endofrange')]"/>
 
   <div class="index">
     <xsl:apply-templates select="$terms" mode="index-div-kosek">
@@ -109,15 +99,13 @@
     <xsl:call-template name="l10n.language"/>
   </xsl:variable>
 
-  <xsl:if test="key('group-code', $key)[&scope;]
-                [count(.|key('primary', &primary;)[&scope;][1]) = 1]">
+  <xsl:if test="key('group-code', $key)[&scope;][count(.|key('primary', &primary;)[&scope;][1]) = 1]">
     <div class="indexdiv">
       <h3>
         <xsl:value-of select="i:group-letter($key)"/>
       </h3>
       <dl>
-        <xsl:apply-templates select="key('group-code', $key)[&scope;]
-                                     [count(.|key('primary', &primary;)[&scope;][1])=1]"
+        <xsl:apply-templates select="key('group-code', $key)[&scope;][count(.|key('primary', &primary;)[&scope;][1])=1]"
                              mode="index-primary">
           <xsl:sort select="&primary;" lang="{$lang}"/>
           <xsl:with-param name="scope" select="$scope"/>

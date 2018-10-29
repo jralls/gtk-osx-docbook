@@ -4,30 +4,18 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: spaces.xsl 5858 2006-04-14 18:11:23Z kosek $
+     $Id: spaces.xsl 9647 2012-10-26 17:42:03Z bobstayton $
      ********************************************************************
      XSL-FO specification treats all space characters like ordinary spaces.
      We need to map them to fo:leader with different widths in order to
      simulate desired behaviour.
      ******************************************************************** -->
 
-<xsl:template match="text()[namespace-uri(..) = '']">
-  <xsl:choose>
-    <xsl:when test="$passivetex.extensions != 0">
-      <xsl:call-template name="passivetex.dash.subst">
-        <xsl:with-param name="string">
-	  <xsl:call-template name="space.2000.subst">
-	    <xsl:with-param name="string" select="."/>
-	  </xsl:call-template>
-	</xsl:with-param>
-      </xsl:call-template>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:call-template name="space.2000.subst">
-	<xsl:with-param name="string" select="."/>
-      </xsl:call-template>
-    </xsl:otherwise>
-  </xsl:choose>
+<xsl:template match="text()[namespace-uri(..) = '' or 
+                     namespace-uri(..) = 'http://docbook.org/ns/docbook']">
+  <xsl:call-template name="space.2000.subst">
+    <xsl:with-param name="string" select="."/>
+  </xsl:call-template>
 </xsl:template>
 
 <xsl:param name="space.enquad.width">0.5em</xsl:param>   <!-- U+2000 -->

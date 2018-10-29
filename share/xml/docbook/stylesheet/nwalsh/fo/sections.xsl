@@ -5,12 +5,12 @@
                 version='1.0'>
 
 <!-- ********************************************************************
-     $Id: sections.xsl 6199 2006-08-24 15:36:31Z bobstayton $
+     $Id: sections.xsl 9841 2014-01-07 22:31:09Z bobstayton $
      ********************************************************************
 
      This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://nwalsh.com/docbook/xsl/ for copyright
-     and other information.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -18,7 +18,7 @@
 
 <xsl:template match="section">
   <xsl:choose>
-    <xsl:when test="$rootid = @id">
+    <xsl:when test="$rootid = @id or $rootid = @xml:id">
       <xsl:call-template name="section.page.sequence"/>
     </xsl:when>
     <xsl:otherwise>
@@ -51,40 +51,52 @@
       <!-- xsl:use-attribute-sets takes only a Qname, not a variable -->
       <xsl:choose>
         <xsl:when test="$level = 1">
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level1.properties">
+          <xsl:element name="fo:{$section.container.element}"
+		       use-attribute-sets="section.level1.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:when>
         <xsl:when test="$level = 2">
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level2.properties">
+          <xsl:element name="fo:{$section.container.element}"
+		       use-attribute-sets="section.level2.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:when>
         <xsl:when test="$level = 3">
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level3.properties">
+          <xsl:element name="fo:{$section.container.element}"
+                       use-attribute-sets="section.level3.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:when>
         <xsl:when test="$level = 4">
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level4.properties">
+          <xsl:element name="fo:{$section.container.element}"
+                       use-attribute-sets="section.level4.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:when>
         <xsl:when test="$level = 5">
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level5.properties">
+          <xsl:element name="fo:{$section.container.element}"
+		       use-attribute-sets="section.level5.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:when>
         <xsl:otherwise>
-          <fo:block id="{$id}"
-                    xsl:use-attribute-sets="section.level6.properties">
+          <xsl:element name="fo:{$section.container.element}"
+		       use-attribute-sets="section.level6.properties">
+            <xsl:attribute name="id"><xsl:value-of 
+                                select="$id"/></xsl:attribute>
             <xsl:call-template name="section.content"/>
-          </fo:block>
+          </xsl:element>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:otherwise>
@@ -282,15 +294,9 @@
       </xsl:apply-templates>
     </xsl:variable>
 
-    <xsl:if test="$passivetex.extensions != 0">
-      <fotex:bookmark xmlns:fotex="http://www.tug.org/fotex" 
-                      fotex-bookmark-level="{$level + 2}" 
-                      fotex-bookmark-label="{$id}">
-        <xsl:value-of select="$marker.title"/>
-      </fotex:bookmark>
-    </xsl:if>
-
-    <xsl:if test="$axf.extensions != 0">
+    <xsl:if test="$axf.extensions != 0 and 
+                  $xsl1.1.bookmarks = 0 and 
+                  $show.bookmarks != 0">
       <xsl:attribute name="axf:outline-level">
         <xsl:value-of select="count(ancestor::*)-1"/>
       </xsl:attribute>
@@ -314,8 +320,10 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}" 
-            xsl:use-attribute-sets="section.level1.properties">
+  <xsl:element name="fo:{$section.container.element}"
+               use-attribute-sets="section.level1.properties">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="sect1.titlepage"/>
 
     <xsl:variable name="toc.params">
@@ -334,7 +342,7 @@
     </xsl:if>
 
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="/sect1">
@@ -427,8 +435,10 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}" 
-            xsl:use-attribute-sets="section.level2.properties">
+  <xsl:element name="fo:{$section.container.element}"
+	       use-attribute-sets="section.level2.properties">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="sect2.titlepage"/>
 
     <xsl:variable name="toc.params">
@@ -447,7 +457,7 @@
     </xsl:if>
 
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="sect3">
@@ -455,8 +465,10 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}" 
-            xsl:use-attribute-sets="section.level3.properties">
+  <xsl:element name="fo:{$section.container.element}"
+	       use-attribute-sets="section.level3.properties">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="sect3.titlepage"/>
 
     <xsl:variable name="toc.params">
@@ -475,7 +487,7 @@
     </xsl:if>
 
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="sect4">
@@ -483,8 +495,10 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}" 
-            xsl:use-attribute-sets="section.level4.properties">
+  <xsl:element name="fo:{$section.container.element}"
+	       use-attribute-sets="section.level4.properties">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="sect4.titlepage"/>
 
     <xsl:variable name="toc.params">
@@ -503,7 +517,7 @@
     </xsl:if>
 
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="sect5">
@@ -511,8 +525,10 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}" 
-            xsl:use-attribute-sets="section.level5.properties">
+  <xsl:element name="fo:{$section.container.element}"
+	       use-attribute-sets="section.level5.properties">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="sect5.titlepage"/>
 
     <xsl:variable name="toc.params">
@@ -531,7 +547,7 @@
     </xsl:if>
 
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="simplesect">
@@ -539,42 +555,51 @@
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
-  <fo:block id="{$id}">
+  <xsl:element name="fo:{$section.container.element}">
+    <xsl:attribute name="id"><xsl:value-of 
+                        select="$id"/></xsl:attribute>
     <xsl:call-template name="simplesect.titlepage"/>
     <xsl:apply-templates/>
-  </fo:block>
+  </xsl:element>
 </xsl:template>
 
 <xsl:template match="sectioninfo"></xsl:template>
+<xsl:template match="section/info"></xsl:template>
 <xsl:template match="section/title"></xsl:template>
 <xsl:template match="section/titleabbrev"></xsl:template>
 <xsl:template match="section/subtitle"></xsl:template>
 
 <xsl:template match="sect1info"></xsl:template>
+<xsl:template match="sect1/info"></xsl:template>
 <xsl:template match="sect1/title"></xsl:template>
 <xsl:template match="sect1/titleabbrev"></xsl:template>
 <xsl:template match="sect1/subtitle"></xsl:template>
 
 <xsl:template match="sect2info"></xsl:template>
+<xsl:template match="sect2/info"></xsl:template>
 <xsl:template match="sect2/title"></xsl:template>
 <xsl:template match="sect2/titleabbrev"></xsl:template>
 <xsl:template match="sect2/subtitle"></xsl:template>
 
 <xsl:template match="sect3info"></xsl:template>
+<xsl:template match="sect3/info"></xsl:template>
 <xsl:template match="sect3/title"></xsl:template>
 <xsl:template match="sect3/titleabbrev"></xsl:template>
 <xsl:template match="sect3/subtitle"></xsl:template>
 
 <xsl:template match="sect4info"></xsl:template>
+<xsl:template match="sect4/info"></xsl:template>
 <xsl:template match="sect4/title"></xsl:template>
 <xsl:template match="sect4/titleabbrev"></xsl:template>
 <xsl:template match="sect4/subtitle"></xsl:template>
 
 <xsl:template match="sect5info"></xsl:template>
+<xsl:template match="sect5/info"></xsl:template>
 <xsl:template match="sect5/title"></xsl:template>
 <xsl:template match="sect5/titleabbrev"></xsl:template>
 <xsl:template match="sect5/subtitle"></xsl:template>
 
+<xsl:template match="simplesect/info"></xsl:template>
 <xsl:template match="simplesect/title"></xsl:template>
 <xsl:template match="simplesect/titleabbrev"></xsl:template>
 <xsl:template match="simplesect/subtitle"></xsl:template>

@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas)]))'>
+<!ENTITY % common.entities SYSTEM "entities.ent">
+%common.entities;
 <!-- Documents using the kimber index method must have a lang attribute -->
 <!-- Only one of these should be present in the entity -->
 
@@ -12,12 +13,12 @@
                 exclude-result-prefixes="k">
 
 <!-- ********************************************************************
-     $Id: autoidx-kimber.xsl 6220 2006-08-30 06:23:19Z bobstayton $
+     $Id: autoidx-kimber.xsl 8729 2010-07-15 16:43:56Z bobstayton $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     and other information.
+     copyright and other information.
 
      ******************************************************************** -->
 

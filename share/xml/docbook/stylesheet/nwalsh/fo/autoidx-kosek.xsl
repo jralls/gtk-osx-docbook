@@ -1,17 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY secondary 'normalize-space(concat(secondary/@sortas, secondary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY tertiary  'normalize-space(concat(tertiary/@sortas, tertiary[not(@sortas) or @sortas = ""]))'>
-
-<!ENTITY sep '" "'>
-<!-- Documents using the kimber index method must have a lang attribute -->
-<!-- Only one of these should be present in the entity -->
-
-<!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                and ($role = @role or $type = @type or
-                (string-length($role) = 0 and string-length($type) = 0))'>
+<!ENTITY % common.entities SYSTEM "../common/entities.ent">
+%common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
@@ -26,12 +16,12 @@
                 version="1.0">
 
 <!-- ********************************************************************
-     $Id: autoidx-kosek.xsl 6219 2006-08-30 06:21:47Z bobstayton $
+     $Id: autoidx-kosek.xsl 8725 2010-07-15 08:08:04Z kosek $
      ********************************************************************
 
      This file is part of the DocBook XSL Stylesheet distribution.
      See ../README or http://docbook.sf.net/ for copyright
-     and other information.
+     copyright and other information.
 
      ******************************************************************** -->
 
@@ -59,8 +49,7 @@
   </xsl:if>
 
 
-  <xsl:if test="not(function-available('exslt:node-set') or
-                    function-available('exslt:nodeSet'))">
+  <xsl:if test="$exsl.node.set.available = 0">
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the </xsl:text>
       <xsl:text>exslt:node-set() function. Use a processor that </xsl:text>
@@ -72,7 +61,7 @@
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the&#xA;</xsl:text>
       <xsl:text>index extension functions be imported:&#xA;</xsl:text>
-      <xsl:text>  xsl:import href="common/autoidx-ng.xsl"</xsl:text>
+      <xsl:text>  xsl:import href="common/autoidx-kosek.xsl"</xsl:text>
     </xsl:message>
   </xsl:if>
 
